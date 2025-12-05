@@ -1,7 +1,7 @@
 #include <SDL3/SDL_main.h>
 
 #include <iostream>
-#include "Engine.h"
+#include "../include/engine.h"
 
 /*
  * assuming windows build platform
