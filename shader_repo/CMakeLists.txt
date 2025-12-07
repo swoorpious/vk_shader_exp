@@ -1,28 +1,28 @@
-cmake_minimum_required(VERSION 4.0)
-project(shader_repo)
+cmake_minimum_required(VERSION 3.20)
+project(vk_shader_repo)
 
 find_package(Vulkan REQUIRED)
 
-
-add_library(Shader_Engine INTERFACE)
-target_include_directories(Shader_Engine INTERFACE
-        "${CMAKE_CURRENT_SOURCE_DIR}/../engine/include"
+add_library(shader_engine_interface INTERFACE
+        select_menu/select_menu.cpp
+        select_menu/select_menu.h)
+target_include_directories(shader_engine_interface INTERFACE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../external"
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
-target_link_libraries(Shader_Engine INTERFACE Vulkan::Headers)
+target_link_libraries(shader_engine_interface INTERFACE Vulkan::Headers)
 
 
-# auto-shader discovery
-message(STATUS "[shader_repo] scanning for shaders to compile...")
-file(GLOB CHILDREN "${CMAKE_CURRENT_SOURCE_DIR}/*")
 
-foreach (CHILD ${CHILDREN})
-    if (IS_DIRECTORY "${CHILD}" AND EXISTS "${CHILD}/CMakeLists.txt")
-        get_filename_component(PLUGIN_NAME "${CHILD}" NAME)
-        message(STATUS "   + registering shader: ${PLUGIN_NAME}")
 
-        add_subdirectory("${CHILD}")
+add_subdirectory(select_menu)
 
-    endif ()
-endforeach ()
+add_library(vk_shader_repo INTERFACE)
+target_link_libraries(vk_shader_repo INTERFACE
+        select_menu
+)
 
-message(STATUS "[shader_repo] scan/compile complete.")
+target_include_directories(vk_shader_repo INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
