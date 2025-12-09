@@ -5,6 +5,8 @@
 
 #include <string>
 
+#include "vulkan/vulkan_core.h"
+
 class EngineObject;
 class Engine;
 
@@ -16,11 +18,10 @@ public:
     virtual void onAttach() {}
     virtual void onDetach() {}
     virtual void onUpdate(float deltaTime) {}
-    virtual void onRender() {}
+    virtual void onRender(VkCommandBuffer cmd) {}
 
     void setEngine(Engine* engineRef);
     
-    // Getters for accessing the engine/parent from outside or derived classes
     Engine* getEngine() const;
     EngineObject* getParent() const;
     const std::string& getName() const;

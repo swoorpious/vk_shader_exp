@@ -42,9 +42,9 @@ void EngineObject::update(float deltaTime) {
     }
 }
 
-void EngineObject::render() {
+void EngineObject::render(VkCommandBuffer cmd) {
     for (LayerComponent* layer : layerStack) {
-        layer->onRender();
+        layer->onRender(cmd);
     }
 }
 

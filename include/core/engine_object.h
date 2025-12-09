@@ -5,6 +5,8 @@
 
 #include <vector>
 #include <string>
+#include "vulkan/vulkan_core.h"
+
 
 class Engine;
 class Viewport;
@@ -25,7 +27,7 @@ public:
     virtual void popLayer(LayerComponent* layer);
 
     virtual void update(float deltaTime);
-    virtual void render();
+    virtual void render(VkCommandBuffer cmd);
 
     Engine* getEngine() const;
     Viewport& getViewport() const;
@@ -33,6 +35,8 @@ public:
 
 protected:
     Engine *engine = nullptr;
+
+    // in the context of this project this is basically a shader project name
     std::string objName = "DefaultEngineObject";
     
     std::vector<LayerComponent*> layerStack; 

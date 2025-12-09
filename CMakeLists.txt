@@ -99,6 +99,10 @@ add_executable(vk_shader_engine
         include/core/engine_object.h
         src/core/layer_component.cpp
         include/core/layer_component.h
+        src/templates/default_shader_debug_ui.cpp
+        include/templates/default_shader_debug_ui.h
+        src/templates/default_shader_layer.cpp
+        include/templates/default_shader_layer.h
 )
 target_link_libraries(vk_shader_engine
         PRIVATE

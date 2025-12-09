@@ -3,6 +3,8 @@
 #include <engine.h>
 #include <core/engine_object.h>
 #include <select_menu/select_menu.h>
+#include "plasma_ball.h"
+#include "screen_coordinates.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -14,6 +16,23 @@
 #include <stdexcept>
 #include <cstdio>
 #include <algorithm>
+#include <functional>
+
+
+static std::function<void()> g_RenderFrameFn = nullptr;
+
+static bool SDLCALL WindowEventWatcher(void* userdata, SDL_Event* event) {
+    if (event->type == SDL_EVENT_WINDOW_EXPOSED || 
+        event->type == SDL_EVENT_WINDOW_RESIZED || 
+        event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
+        event->type == SDL_EVENT_WINDOW_MOVED) 
+    {
+        if (g_RenderFrameFn) {
+            g_RenderFrameFn();
+        }
+    }
+    return false;
+}
 
 Engine::Engine() {
     initSDL();
@@ -30,6 +49,9 @@ Engine::Engine() {
 }
 
 Engine::~Engine() {
+    g_RenderFrameFn = nullptr;
+    SDL_RemoveEventWatch(WindowEventWatcher, nullptr);
+
     vkDeviceWaitIdle(device);
 
     ImGui_ImplVulkan_Shutdown();
@@ -65,57 +87,18 @@ void Engine::switchProject(EngineObject* new_app) {
 void Engine::run() {
     // load the first EngineObject subclass to begin
     switchProject(new SelectMenuObject(this));
+    // switchProject(new PlasmaBallObject(this));
+    // switchProject(new ScreenCoordinatesObject(this));
 
     uint64_t lastTime = SDL_GetPerformanceCounter();
 
-    bool running = true;
-    while (running) {
+    auto renderFrame = [&]() {
         const uint64_t now = SDL_GetPerformanceCounter();
         const float deltaTime = static_cast<float>(now - lastTime) / static_cast<float>(SDL_GetPerformanceFrequency());
         lastTime = now;
 
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-                running = false;
-            
-            // handle window resize
-            if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-                if (event.window.windowID == SDL_GetWindowID(window)) {
-                    int w = 0, h = 0;
-                    SDL_GetWindowSize(window, &w, &h);
-                    
-                    // only resize if the window has valid dimensions - not minimized
-                    if (w > 0 && h > 0) {
-                        viewport.onResize();
-                        vkDeviceWaitIdle(device);
-
-                        for (auto fb : framebuffers) 
-                            vkDestroyFramebuffer(device, fb, nullptr);
-                        framebuffers.clear();
-
-                        vkFreeCommandBuffers(device, commandPool, 
-                                           static_cast<uint32_t>(commandBuffers.size()), 
-                                           commandBuffers.data());
-                        commandBuffers.clear();
-
-                        if (swapchain) {
-                            vkDestroySwapchainKHR(device, swapchain, nullptr);
-                            swapchain = VK_NULL_HANDLE;
-                        }
-
-                        createSwapchain();
-                        createFramebuffers();
-                        createCommandBuffers();
-                    }
-                }
-            }
-        }
-
         if (swapchainExtent.width == 0 || swapchainExtent.height == 0) {
-            SDL_Delay(100); 
-            continue;
+            return;
         }
 
         // setup/render imgui
@@ -126,12 +109,6 @@ void Engine::run() {
         // tick EngineObject on every iteration
         if (current_app) {
             current_app->update(deltaTime);
-            
-            /*
-             * needs to be called before ImGui::Render()
-             * cannot render before calling ImGui::NewFrame() and rendering all the layers inside EngineObject
-             */
-            current_app->render(); // calls internal render hook (which does nothing lol)
         }
         ImGui::Render();
 
@@ -154,6 +131,14 @@ void Engine::run() {
 
         vkCmdBeginRenderPass(cmd, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
         
+        if (current_app) {
+            /*
+             * needs to be called before ImGui::Render()
+             * cannot render before calling ImGui::NewFrame() and rendering all the layers inside EngineObject
+             */
+            current_app->render(cmd); // calls internal render hook (which does nothing lol)
+        }
+
         /*
          * this line here renders imgui
          */
@@ -188,9 +173,62 @@ void Engine::run() {
         }
 
         currentFrame = (currentFrame + 1) % framebuffers.size();
+    };
+
+    // g_RenderFrameFn = renderFrame;
+    // SDL_AddEventWatch(WindowEventWatcher, nullptr);
+
+    bool running = true;
+    while (running) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL3_ProcessEvent(&event);
+            if (event.type == SDL_EVENT_QUIT)
+                running = false;
+            
+            // handle window resize
+            if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                if (event.window.windowID == SDL_GetWindowID(window)) {
+                    int w = 0, h = 0;
+                    SDL_GetWindowSize(window, &w, &h);
+                    
+                    // only resize if the window has valid dimensions - not minimized
+                    if (w > 0 && h > 0) {
+                        viewport.onResize();
+                        vkDeviceWaitIdle(device);
+
+                        for (auto fb : framebuffers) 
+                            vkDestroyFramebuffer(device, fb, nullptr);
+                        framebuffers.clear();
+
+                        vkFreeCommandBuffers(device, commandPool, 
+                                           static_cast<uint32_t>(commandBuffers.size()), 
+                                           commandBuffers.data());
+                        commandBuffers.clear();
+
+                        if (swapchain) {
+                            vkDestroySwapchainKHR(device, swapchain, nullptr);
+                            swapchain = VK_NULL_HANDLE;
+                        }
+
+                        createSwapchain();
+                        createFramebuffers();
+                        createCommandBuffers();
+                        
+                        renderFrame();
+                    }
+                }
+            }
+        }
+
+        if (swapchainExtent.width == 0 || swapchainExtent.height == 0) {
+            SDL_Delay(100); 
+            continue;
+        }
+
+        renderFrame();
     }
 }
-
 
 void Engine::initImGui() {
     IMGUI_CHECKVERSION();
@@ -302,7 +340,7 @@ void Engine::initVulkan() {
 
 void Engine::createImGuiPool() {
     VkDescriptorPoolSize poolSizes[] = {
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }, // font texture
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }, // Font texture
     };
     VkDescriptorPoolCreateInfo pi{};
     pi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

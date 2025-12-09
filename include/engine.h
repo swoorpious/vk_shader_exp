@@ -10,7 +10,6 @@
 
 struct SDL_Window;
 
-// Forward Declaration
 class EngineObject;
 
 class Engine {
@@ -22,7 +21,10 @@ public:
     void switchProject(EngineObject* new_app);
 
     Viewport& getViewport() { return viewport; }
-    SDL_Window* getWindow() { return window; }
+    SDL_Window* getWindow() const { return window; }
+    VkDevice getDevice() const { return device; }
+    VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
+    VkRenderPass getRenderPass() const { return imguiRenderPass; }
 
 private:
     SDL_Window* window = nullptr;
