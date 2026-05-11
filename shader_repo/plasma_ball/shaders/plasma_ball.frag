@@ -1,3 +1,5 @@
+// shader by @xordev on twitter
+// source: https://x.com/XorDev/status/1894123951401378051
 #version 450
 
 layout(location = 0) in vec2 inUV;
