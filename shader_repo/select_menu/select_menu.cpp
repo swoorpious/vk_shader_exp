@@ -4,9 +4,10 @@
 #include "select_menu_layer.h"
 #include <engine.h>
 
-// Include your shader headers here
+// include your shader headers here
 #include <plasma_ball/plasma_ball.h>
 #include <screen_coordinates/screen_coordinates.h>
+#include <fire_golf/fire_golf.h>
 
 SelectMenuObject::SelectMenuObject(Engine* e): EngineObject(e) {
     objName = "[EngineObject] Select Menu";
@@ -16,6 +17,7 @@ void SelectMenuObject::onSetup() {
     EngineObject::onSetup();
     
     registerClass<PlasmaBallObject>("Plasma Ball");
+    registerClass<FireGolfObject>("Fire Golf");
     registerClass<ScreenCoordinatesObject>("Screen Coordinates");
     
     pushLayer(new SelectMenuLayer(this));

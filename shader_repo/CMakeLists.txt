@@ -17,12 +17,14 @@ target_link_libraries(shader_engine_interface INTERFACE Vulkan::Headers)
 add_subdirectory(select_menu)
 add_subdirectory(plasma_ball)
 add_subdirectory(screen_coordinates)
+add_subdirectory(fire_golf)
 
 add_library(vk_shader_repo INTERFACE)
 target_link_libraries(vk_shader_repo INTERFACE
         select_menu
         SHAD_plasma_ball
         SHAD_screen_coordinates
+        SHAD_fire_golf
 )
 
 target_include_directories(vk_shader_repo INTERFACE

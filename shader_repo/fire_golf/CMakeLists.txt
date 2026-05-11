@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
-project(SHAD_plasma_ball)
+project(SHAD_fire_golf)
 
+# Define the library and its sources
 add_library(${PROJECT_NAME} STATIC
-        plasma_ball.cpp
-        plasma_ball.h
-        layers/plasma_ball_ui_layer.cpp
+        fire_golf.cpp
+        fire_golf.h
+        layers/fire_golf_ui_layer.cpp
         layers/screen_coordinates_ui_layer.h
-        layers/plasma_ball_shader_layer.cpp
-        layers/plasma_ball_shader_layer.h
+        layers/fire_golf_shader_layer.cpp
+        layers/fire_golf_shader_layer.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

@@ -16,5 +16,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         shader_engine_interface
         SHAD_plasma_ball
         SHAD_screen_coordinates
+        SHAD_fire_golf
 )
 

@@ -13,7 +13,7 @@ void PlasmaBallObject::onSetup() {
     EngineObject::onSetup();
 
     pushLayer(new PlasmaBallShaderLayer(this));
-    pushLayer(new PlasmaBallUILayer(this));
+    pushLayer(new PlasmaBallUILayer(this)); // includes debug ui
 }
 
 void PlasmaBallObject::update(float deltaTime) {
